@@ -1,0 +1,171 @@
+---
+title: "D607_A1_RickS"
+author: "Rick S"
+date: "8/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+# load packages
+library(plyr)  # load this before dplyr
+library(dplyr) # load plyr first then this pkg
+library(magrittr)
+library(stringr)  # for string manipulation
+library(ggplot2) # for graphics
+library(scales)  # see p107 in R for Everyone
+
+```
+
+## Overview
+
+Voting is an important civic duty in a democracy. Registered voters can participate in federal, state, and local elections. Presidential elections, held every 4 years, are  important major national events.  There are many get out the vote campaigns preceded by voter registration drives.  While voter registrations for the 2020 election cycle was exceeding the corresponding 2016 election cycle, the COVID-19 global pandemic has adversely affected this process (Rogers & Rakich, 2020).
+
+
+Reference:
+Rogers, K., & Rakich, N. (2020, Jun 26). Voter registrations are way, way down during the pandemic. Retrieved from <https://fivethirtyeight.com/features/voter-registrations-are-way-way-down-during-the-pandemic/>.
+
+
+```{r readcsv}
+theURL <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/voter-registration/new-voter-registrations.csv"
+
+new_voter_regs_DF <- read.table(file=theURL, header=TRUE, sep=",")
+
+dim(new_voter_regs_DF)
+
+str(new_voter_regs_DF)
+
+head(new_voter_regs_DF)
+
+tail(new_voter_regs_DF)
+
+#new_voter_regs_DF
+
+```
+
+## Data Munging
+
+
+Changed Jurisdiction to State and "New Registered Voters" to "New Voter Regs".
+Modifed Month to include numeric for calendar sequence.
+
+
+```{r nvr_datamanipulation, echo=TRUE}
+colnames(new_voter_regs_DF)<-c("State","Year","Month","NewVoterRegs")
+head(new_voter_regs_DF)
+
+# sequence month in calendar order
+vec <- new_voter_regs_DF$Month
+
+SeqMonth  <- function(vec) {
+  newvec <- vec
+  for (i in 1:length(vec)) {
+    if(vec[i] == "Jan") {
+      newvec [i] <- "01:Jan"
+    }else if(vec[i] == "Feb") {
+      newvec [i] <- "02:Feb"
+    }else if(vec[i] == "Mar") {
+      newvec [i] <- "03:Mar"
+    }else if(vec[i] == "Apr") {
+      newvec [i] <- "04:Apr"
+    }else if(vec[i] == "May") {
+      newvec [i] <- "05:May"
+    }else if(vec[i] == "Jun") {
+      newvec [i] <- "06:Jun"
+    }else if(vec[i] == "Jul") {
+      newvec [i] <- "07:Jul"
+    }else if(vec[i] == "Aug") {
+      newvec [i] <- "08:Aug"
+    }else if(vec[i] == "Sep") {
+      newvec [i] <- "09:Sep"
+    }else if(vec[i] == "Oct") {
+      newvec [i] <- "10:Oct"
+    }else if(vec[i] == "Noc") {
+      newvec [i] <- "11:Nov"
+    }else if(vec[i] == "Dec") {
+      newvec [i] <- "12:Dec"
+    }else {
+      newvec [i] <- "00-???"
+    }
+  }
+#  print (newvec)
+  return(vec <-newvec)
+}
+
+new_voter_regs_DF$Month <- (SeqMonth(vec))
+
+```
+
+## Subsetting - Extract 2016 New Voter Registration data
+
+In preparation for graphing, extract 2016 data
+
+```{r nvr2016_subsetting, echo=TRUE}
+# subset some data
+df_2016nvr <- subset(new_voter_regs_DF, Year==2016)
+head(df_2016nvr)
+
+```
+
+
+## January through May 2016 New Voter Registrations Line Plots
+
+These line plots show the January through May 2016 New Voter Registrations by State.
+
+```{r nvr2016_plot, echo=TRUE}
+
+g <- ggplot(data=df_2016nvr, aes(x=Month, y=NewVoterRegs))
+g <- g + geom_line(aes(color=factor(State), group=State))
+g <- g + scale_color_discrete(name="State")
+g <- g + scale_y_continuous(labels=comma)
+g <- g + labs(title="2016 New Voter Registrations by State", x="Month", y="New Voter Registrations")
+g
+
+```
+
+## Subsetting - Extract 2020 New Voter Registration data
+
+In preparation for graphing , extract 2020 data
+
+```{r nvr2020_subsetting, echo=TRUE}
+# subset some data
+df_2020nvr <- subset(new_voter_regs_DF, Year==2020)
+head(df_2020nvr)
+
+```
+
+
+## January through May 2020 New Voter Registrations Line Plots
+
+These line plots show the January through May 2020 New Voter Registrations by State.
+
+```{r nvr_plot2020, echo=TRUE}
+
+g <- ggplot(data=df_2020nvr, aes(x=Month, y=NewVoterRegs))
+g <- g + geom_line(aes(color=factor(State), group=State))
+g <- g + scale_color_discrete(name="State")
+g <- g + scale_y_continuous(labels=comma)
+g <- g + labs(title="2020 New Voter Registrations by State", x="Month", y="New Voter Registrations")
+g
+
+```
+
+## Subsetting - Extract May 2020 New Voter Registration data
+
+However, only the following 5 States out of 12 reported New Voter Registration data in May 2020.
+
+```{r nvrMay2020_subsetting, echo=TRUE}
+# subset some data
+df_May2020nvr <- subset(new_voter_regs_DF, Year==2020 & Month == "05:May")
+head(df_May2020nvr)
+
+```
+
+## Conclusions
+
+The COVID-19 Global Pandemic has had a substantial adverse affect on new voter registrations in 2020.  While January and February appear comparable in 2016 and 2020, there is a substantial drop in new voter registrations beginning in March 2020 coinciding with emergency federal, state, and local executive actions related to flattening the curve of COVID-19 cases.   
+
+As COVID-19 cases within the U.S. and around the globe increased in March through May, one can see the dramatic rise in cases from this Johns Hopkins Coronavirus Critical Trends Graph <https://coronavirus.jhu.edu/data/new-cases>.  One can also observe the trend in confirmed cases by state <https://coronavirus.jhu.edu/data/new-cases-50-states>.
+
