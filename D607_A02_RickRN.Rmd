@@ -1,0 +1,108 @@
+---
+title: "D607_A02_RickRN"
+author: "RickRN"
+date: "9/5/2020"
+output: html_document
+---
+
+```{r setup_1, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DATA607 Week 2 Assignment: SQL & R
+
+Each month, the popular Rotten Tomatoes website ranks the 100 best movies on Netflix as ranked by the Tomatometer.
+
+September 2020: See <https://editorial.rottentomatoes.com/guide/best-netflix-movies-to-watch-right-now/>
+
+An informal survey was created selecting the 5th film from each of set of 10 films among the top 60.
+
+THe Movie Survey is available at <https://www.surveymonkey.com/>.  Note: Not working but can be here.
+
+
+```{r setup_2, echo=TRUE}
+# 
+library(RMySQL)
+library(tidyverse)
+
+```
+
+## Setup MySQL database connection 
+
+Prompt user for database username and password then setup database connection.
+
+```{r setup_DBcon, echo=TRUE}
+#prompt for input 
+
+#vardb_schema <- readline(prompt = "Enter your DB schema: ")
+#vardb_user <- readline(prompt = "Enter your DB username: ")
+#vardb_password <- readline(prompt = "Enter your password: ")
+
+
+vardb_user <- "DATA607"
+vardb_password <- "hello"
+vardb_schema <- "a02"
+
+cat("Schema=", vardb_schema, " username=", vardb_user, " password=", vardb_password)
+
+
+
+mydb = dbConnect(RMySQL::MySQL(), user=vardb_user,  password=vardb_password, port=3306, dbname=vardb_schema, host='localhost')
+
+summary(mydb)
+
+```
+
+## Load popular movie data table 
+
+The .csv data will be loaded into the 
+
+```{r load_pop_movie_table, echo=TRUE}
+# put code from SQL script here. 
+
+pop_movie_df <- dbGetQuery(mydb, "select * from survey_popmovies")
+
+dim(pop_movie_df)
+str(pop_movie_df)
+pop_movie_df
+
+
+```
+
+## Load movie survey data table 
+
+The .csv data will be loaded into the and handle missing data
+
+```{r load_movie_survey_table, echo=TRUE}
+# put code from SQL script here. 
+
+survey_responses_df <- dbGetQuery(mydb, "select * from survey_responses")
+
+dim(survey_responses_df)
+str(survey_responses_df)
+survey_responses_df
+
+```
+
+## Plots of movie survey data 
+
+add narrative 
+
+```{r do_analysis, echo=TRUE}
+
+
+survey_responses_df <- dbGetQuery(mydb, "select * from survey_responses WHERE survey_seen_movie = 1")
+
+dim(survey_responses_df)
+str(survey_responses_df)
+survey_responses_df
+
+#ggplot(data=survey_responses_df, aes(x=survey_likert, y=movie_id)) + geom_line()
+
+g <- ggplot(survey_responses_df, aes(x = survey_likert, y = movie_id)) + geom_line() + xlab('Likert Rating') + ylab('Popular Movies') + facet_wrap(~movie_id) + labs(title = "Popular Movie Likert Results")
+print(g)
+```
+
+## Summary
+
+narrative
