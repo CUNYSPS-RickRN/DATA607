@@ -1,0 +1,134 @@
+---
+title: "D607_A03"
+author: "RickRN"
+date: "9/10/2020"
+output:
+  html_document:
+  number_sections: yes
+  toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+#library(stringr)
+```
+
+# Week 3 Assignment in Character Manipulation 
+
+_This week's assignment comprises the following:_
+
+1. provide code that identifies College Majors containing "DATA" or "STATISTICS"
+
+2. provide code that transforms a set of data
+
+3. Describe, in words, what specified expressions will match
+
+4. Construct regular expressions to match words
+
+
+```{r task1_a,echo=FALSE}
+# get fivethirtyeight data
+
+
+theURL <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv"
+
+five38_df <- read.csv(file=theURL, header=TRUE, sep=",")
+
+#dim(five38_df)
+
+#head(five38_df)
+
+#tail(five38_df)
+
+#names (five38_df)
+
+```
+
+## Task 1: Provide code that identifies College Majors containing "DATA" or "STATISTICS"
+
+Following is the code to identify college majors containing "DATA" or "STATISTICS".
+
+```{r task1_b, echo=TRUE}
+# find majors containing specific strings
+
+str_to_title(str_subset(str_to_lower(five38_df$Major), str_to_lower("DATA|SCIENCES")))
+
+
+```
+## Task 2: Provide code that transforms a set of data
+
+Transform this vector of data from one form into another form:
+
+```{r task2a, echo=TRUE}
+# transform set of set
+
+(task_var <-c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry"))
+
+(new_var <- glue::glue('c("{fruitlist}")',
+  fruitlist = glue::glue_collapse(task_var, sep = '", "')))
+
+```
+## Task 3: Describe, in words, what specified expressions will match
+
+1.	(.)\1\1
+2.	"(.)(.)\\2\\1"
+3.	(..)\1
+4.	"(.).\\1.\\1"
+5.	"(.)(.)(.).*\\3\\2\\1"
+
+```{r task3, echo=TRUE}
+# patterns
+
+# (.)\1\1 
+#	"(.)(.)\\2\\1" 
+#	(..)\1
+#	"(.).\\1.\\1"
+#	"(.)(.)(.).*\\3\\2\\1"
+
+
+# 1. I was expecting the pattern below to find 1 character group, number it as \1 then repeat it twice.  expected result aaa,bbb but didn't work
+str_view(c("aaa","abc","bbb"),"(.)\1\1") # from book R4DS, maybe wrong?
+# Try pattern again but using 2 backslashes, book typo?
+str_view(c("aaa","abc","bbb"),"(.)\\1\\1") # try pattern with 2 backslashes
+
+
+# code from slack post. not sure what \1\1 really is. ESC and something?
+test <- list("777", "data\1\1", "anna", "2002", '"elle"')
+str_view(test, "(.)\1\1", match = TRUE)
+
+
+# 2. the below example defines 2 character groups, numbers them 1 and 2 respectively, then reverses the character groups
+str_view(c("abba","baba","baab","saab"),"(.)(.)\\2\\1")
+
+# 3. I was expecting the pattern below to find 1 character group, number it as \1 then repeat it twice.  expected result aaa,bbb but didn't work
+str_view(c("aaaa","abab","bbbc"),"(..)\1")
+# Try pattern again but using 2 backslashes, book typo?
+str_view(c("aaaa","abab","bbbc"),"(..)\\1") # try again with 2 backslashes
+
+# 4. The pattern below finds a character, becomes group 1, followed by any char, group 1 character, followed by any character, then followed by same character as group 1.  Expected result: abaca
+str_view(c("abaca","bcdbb"),"(.).\\1.\\1")  #abaca
+
+
+# 5. The pattern below  finds 3 singular character groups, numbering each group respectively as 1,2,3, followed by zero or more characters then ending with the first 3 characters in reverse order.  Expected result: abccba
+str_view(c("abccba","abcdcba","abc123"),"(.)(.)(.).*\\3\\2\\1")  #abccba
+```
+## Task 4: Construct regular expressions to match words
+
+1.	Start and end with the same character.
+2.	Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+3.	Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r task4, echo=TRUE}
+#
+str_subset(five38_df$Major, "^(.)((.*\\1$)|\\1$)") # start & end same char
+
+str_subset  ("church", "([A-Za-z][A-Za-z]).*\\1")  # repeated pair of letters
+
+str_subset("eleven", "([A-Za-z]).*\\1.*\\1") # one letter repeated in 3 places
+
+```
+## Summary
+
+Regular expressions are useful because strings usually contain unstructured or semi-structured data, and regexps are a concise language for describing patterns in strings.
