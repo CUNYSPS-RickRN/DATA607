@@ -82,7 +82,7 @@ for (i in 1:64)
 
 # Extract Player Pre-rating
 # pre-rating part 1
-  str_chess_pattern = "(R: )([0-9]{1,4})"  # pattern for player pre-rating
+  str_chess_pattern = "(R:)(\\s+)([0-9]{1,4})"  # pattern for player pre-rating
   str_detect(str_trim(strChessData), str_chess_pattern)  # Detect player pre-rating
   str_view_all(str_trim(strChessData), str_chess_pattern)
 
