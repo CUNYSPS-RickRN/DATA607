@@ -33,7 +33,7 @@ for (i in 1:64)
 
 
 # Extract Player Name
-  str_chess_pattern = c("([A-Za-z]+\\s[A-Za-z]+)") # pattern for player name
+  str_chess_pattern = c("([A-Za-z]+\\s[A-Za-z]+)(\\s[A-Za-z]+){0,}") # pattern for player name
   str_detect(str_trim(strChessData), str_chess_pattern)  # Detect player name
   str_view_all(str_trim(strChessData), str_chess_pattern)
   c_playername <- str_extract(str_trim(strChessData), str_chess_pattern)
@@ -51,7 +51,7 @@ for (i in 1:64)
   str_detect(str_trim(strChessData), str_chess_pattern)  # Detect chess rounds
   str_view_all(str_trim(strChessData), str_chess_pattern)
 
-  str_locate_all(str_trim(strChessData), str_chess_pattern) # locate Round ?stpositions
+  str_locate_all(str_trim(strChessData), str_chess_pattern) # locate Rounds
 
   chess_rounds <- unlist(str_extract_all(str_trim(strChessData), str_chess_pattern)) # locate Round ?stpositions
 
@@ -100,12 +100,12 @@ for (i in 1:64)
 
 # 
 # put player pre-rating into a list  64 players and their pre-rating values
-  chess_preratings_list <- c_prerating
+# chess_preratings_list <- c_prerating
 
 #put player opponents 64 players x  7 rounds chess, games played
 #[1] "39,21,18,14,7,12,4"
 
-  this_Opponents_df <- data.frame(t_playernum, chess_rounds)
+  this_Opponents_df <- data.frame(t_playernum, chess_rounds, c_prerating=NA)
   Opponents_df <- bind_rows(Opponents_df, this_Opponents_df)  # add "bind" row to df
 
 
@@ -116,25 +116,52 @@ for (i in 1:64)
   c_loc
   c_totpoints
   c_prerating
-  c_avg_opp_prerating <- 9999
+  c_avg_opp_prerating <- NA
 
-  theCSV <- data.frame(c_playername, c_loc, c_totpoints, c_prerating, c_avg_opp_prerating )
-  length(theCSV)
-  names(theCSV)
-  dim(theCSV)
-  theCSV_row <- str_flatten(theCSV,collapse = ",")
-  theCSV_row
+  theCSV <- data.frame(t_playernum, c_playername, c_loc, c_totpoints, c_prerating, c_avg_opp_prerating )
+#  length(theCSV)
+#  names(theCSV)
+#  dim(theCSV)
+#  theCSV_row <- str_flatten(theCSV,collapse = ",")
+#  theCSV_row
 
 # bind_rows(theCSV, output)
   OutputCSV_df <- bind_rows(OutputCSV_df, theCSV)  # add "bind" row to df
 
 }
 
-# Key datasets
-Opponents_df
 OutputCSV_df
-OutputCSV_df$c_prerating
-# remove temporary playernum vector
 
+# Calculate Mean of opponent's pre-ratings
+thisval_df <- data.frame()  # define df
+thisval_df
+
+#thisval <- OutputCSV_df$c_prerating[Opponents_df$chess_rounds[1]]
+#OutputCSV_df$c_avg_opp_prerating[1] <- mean(thisval$c_prerating)
+
+for (i in 1:nrow(Opponents_df))
+  {
+#  
+  Opponents_df$c_prerating[i] <- OutputCSV_df$c_prerating[Opponents_df$chess_rounds[i]]
+}
+
+
+# get subset of each player's opponents then calc mean of opponents' pre-ratings
+for (i in 1:nrow(OutputCSV_df))
+  {
+    thisval <- subset(Opponents_df, t_playernum == i, select = c_prerating)
+    print (i)
+    print (thisval)
+    
+    OutputCSV_df$c_avg_opp_prerating[i] <- round(mean(thisval$c_prerating))
+    
+}
+
+
+# Key datasets
+print (OutputCSV_df)
+Opponents_df
+
+# (TBD) remove temporary playernum vector prior to creating .csv
 write.csv(OutputCSV_df)
 
