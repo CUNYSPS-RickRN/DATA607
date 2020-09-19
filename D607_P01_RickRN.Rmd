@@ -1,0 +1,345 @@
+---
+title: "D607_P01_RickRN"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Project 1:  Data Analysis - Chess Tournament
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this project, a text file containing results from a Chess Tournament of 64 players will be imported from Github, then manipulated in order to calculate a chess player's mean pre-chess tournament rating of  opponents, and finally create a .csv file for use in subsequent analysis.
+
+
+Collaborators: Jered Ataky, Dan Rosenfeld, Magnus Skonberg, Rick Sughrue
+
+</div> \hfill\break
+```{r setup_libs, include=FALSE}
+library(tidyverse)
+```
+
+# 1: Read text file
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this step, the file is read using read_csv into a dataframe where the first 4 rows containing title were removed along with all rows containing all dashes (--).
+
+Patterns in the data observed:
+1.    Each player's information contained in pairs of rows.
+2.    "Top line" information in odd numered rows consists of: player's number, name, total points earned in tournament, and for each of the 7 rounds game status (Win, Loss, Draw, Unplayed) and points awarded.
+3.    "Bottom line" information in even numbered rows consists of: player's home State/Province, USCF ID, Pre and post ratings, followed by other information.
+
+
+
+
+Source file: <https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/tournamentinfo.txt>.
+
+</div> \hfill\break
+```{r read_textfile, echo=FALSE}
+
+theURL <- c("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/tournamentinfo.txt")
+
+chess_V2_df <- data.frame(read_csv(file=theURL, col_names=FALSE, skip = 3, comment = "--"))  # file contains rows of all dashes, comment= will remove these rows
+
+head(read.csv(file=theURL, header = FALSE)) # print "title rows"
+
+```
+
+# 2: Create data frames to receive extracted data
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+The OutputCSV_df will contain elements needed to create specified .CSV file
+
+The Opponents_df will contain a cross-table of each player's opponents round results
+
+
+</div> \hfill\break
+
+```{r create_df, echo=TRUE}
+
+OutputCSV_df <- data.frame()  # Data elements needed for .CSV dataset
+
+Opponents_df <- data.frame()  # Cross-table of each player's opponents round results
+
+```
+
+# 3: Define Patterns for Regular Expressions
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+Visually identified data patterns, then defined Regular Expressions.
+
+</div> \hfill\break
+
+```{r define_patterns, echo=TRUE}
+# Patterns in first row
+str_pattern_playernum = "^([0-9]{1,2})"  # pattern for player number
+str_pattern_playername = c("([A-Za-z]+\\s[A-Za-z]+)(\\s[A-Za-z]+){0,}") # pattern for player name
+str_pattern_totalpts = c("([0-9]+\\.[0-9]+)") # pattern for Total Pts
+str_pattern_chessrounds_p1 = c("(W|L|D)(\\s+)[0-9]{1,2}") # pattern for chess rounds
+str_pattern_chessrounds_p2 = c("[0-9]{1,2}") # pattern for chess rounds numbers
+
+
+# Patterns in second row
+str_pattern_playerstate = "^([A-Za-z]{1,2})"  # pattern for Player State/Prov
+str_pattern_playerprerating_p1 = "(R:)(\\s+)([0-9]{1,4})"  # pattern for player pre-rating
+str_pattern_playerprerating_p2 = "[0-9]{1,4}"  # pattern for numeric portion player pre-rank
+
+```
+
+
+# 4: Using Patterns to Extract Data Fields
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+Examined each pair of player rows using Regular Expressions to detect and extract data fields. From the 'top' (odd numbered)' rows: player number, name, total points, and game status for each round.  From the 'bottom' (even numbered)' rows: player's State/Province and Pre-game rating.
+
+A "for loop" iterates through each player row pair and information loaded into OutputCSV_df and Opponents_df dataframes.
+
+
+
+</div> \hfill\break
+
+``` {r step_extractdata, echo=TRUE}
+
+#  The following code can be used to detect and view patterns for 'debugging' when copied near adjacent code
+#  str_detect(str_trim(strChessData), str_chess_pattern)  # Detect pattern
+#  str_view_all(str_trim(strChessData), str_chess_pattern)  # view pattern
+
+
+
+x = -1  # Initial index for odd numbered rows then increment by 2
+y = 0   # prime index for even numbered rows then increment by 2
+
+
+for (i in 1:64)
+  {
+
+# odd numbered rows contain player name
+  x= x + 2
+
+#  chess_V2_df$X1[x]
+
+# Extract Player Number
+  str_chess_pattern = str_pattern_playernum  # pattern for player number
+  strChessData <- chess_V2_df$X1[x]
+  t_playernum <- as.numeric(str_extract(str_trim(strChessData), str_chess_pattern))
+
+
+# Extract Player Name
+  str_chess_pattern = str_pattern_playername # pattern for player name
+  c_playername <- str_extract(str_trim(strChessData), str_chess_pattern)
+
+
+# Extract Total Points
+  str_chess_pattern = str_pattern_totalpts # pattern for Total Pts
+  c_totpoints <- (str_extract(str_trim(strChessData), str_chess_pattern))
+# need to convert c_totpoints to numeric
+
+# str_detect(str_trim(strChessData), str_chess_pattern)  # Detect chess rounds
+# str_view_all(str_trim(strChessData), str_chess_pattern)
+
+  
+# Extract Chess Rounds Opponents
+  str_chess_pattern = str_pattern_chessrounds_p1 # pattern for chess rounds
+  chess_rounds <- unlist(str_extract_all(str_trim(strChessData), str_chess_pattern))
+
+#  str_detect(str_trim(strChessData), str_chess_pattern)  # Detect chess rounds
+#  str_view_all(str_trim(strChessData), str_chess_pattern)
+#  str_locate_all(str_trim(strChessData), str_chess_pattern) # locate Rounds
+
+
+# Extract on pulling out opponent numbers
+  str_chess_pattern = str_pattern_chessrounds_p2 # pattern for chess rounds numbers
+  chess_rounds <- as.numeric(unlist(str_extract_all(str_trim(chess_rounds), str_chess_pattern))) # Extract rounds
+
+#  str_detect(str_trim(chess_rounds), str_chess_pattern)  # Detect chess rounds
+#  str_view_all(str_trim(chess_rounds), str_chess_pattern)
+#  str_locate_all(str_trim(chess_rounds), str_chess_pattern) # locate Rounds
+
+
+## 
+
+# even numbered rows have location / ranking info
+  y = y + 2
+
+# Extract Player Location (State/Province)
+  str_chess_pattern = str_pattern_playerstate  # pattern for Player State/Prov
+  strChessData <- chess_V2_df$X1[y]
+  c_loc <- str_extract(str_trim(strChessData), str_chess_pattern)
+
+
+# Extract Player Pre-rating
+# pre-rating part 1
+  str_chess_pattern = str_pattern_playerprerating_p1  # pattern for player pre-rating
+  c_prerating <- str_extract(str_trim(strChessData), str_chess_pattern)
+
+
+
+# pre-rating part 2
+  str_chess_pattern = str_pattern_playerprerating_p2  # pattern for numeric portion player pre-rank
+  c_prerating <- as.numeric(str_extract(str_trim(c_prerating), str_chess_pattern))
+
+#  str_detect(str_trim(c_prerating), str_chess_pattern)  # Detect player pre-rating
+#  str_view_all(str_trim(c_prerating), str_chess_pattern)
+
+
+
+# put player pre-rating into a df 64 players and their pre-rating values
+
+# put player opponents 64 players x  7 rounds chess, games played
+  this_Opponents_df <- data.frame(t_playernum, chess_rounds, c_prerating=NA)
+  Opponents_df <- bind_rows(Opponents_df, this_Opponents_df)  # add/"bind" row to df
+
+# expected output ".csv file" from as a dataframe 64 players x 5 output values
+  theCSV <- data.frame(t_playernum, c_playername, c_loc, c_totpoints, c_prerating, c_avg_opp_prerating=NA )
+
+# "add"/bind_rows to dataframe
+  OutputCSV_df <- bind_rows(OutputCSV_df, theCSV)  # "add"/bind row to df
+
+}
+
+
+```
+
+# 5: Obtain each Player's Opponents' Pre-Chess Rating
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+Obtain each player's opponents' pre-chess rating and load into Opponents_df for used in following step to calculate MEAN.
+
+</div> \hfill\break
+
+```{r step_lookup_ratings, echo=TRUE}
+
+# Index into each Player's Opponents to obtain their Pre-Chess Rating
+
+for (i in 1:nrow(Opponents_df))
+  {
+#  
+  Opponents_df$c_prerating[i] <- OutputCSV_df$c_prerating[Opponents_df$chess_rounds[i]]
+}
+
+
+```
+
+# 6: Calculate MEAN Pre-chess rating of Opponents
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+For each player, obtain the opponents' pre-ratings to calculate a rounded MEAN.
+
+</div> \hfill\break
+
+```{r step_calcmean, echo=TRUE}
+
+thisval_df <- data.frame()  # define a 'working' df
+
+# get subset of each player's opponents then calc mean of opponents' pre-ratings
+for (i in 1:nrow(OutputCSV_df))
+  {
+    thisval <- subset(Opponents_df, t_playernum == i, select = c_prerating)
+    OutputCSV_df$c_avg_opp_prerating[i] <- round(mean(thisval$c_prerating))
+    
+}
+
+```
+# 7: Show sample information
+
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Using the first player's information for Gary Hua, the opponents' MEAN rating of 1605  calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played (7).
+
+
+</div> \hfill\break
+```{r step_show_sample, echo=TRUE}
+(display_opponents <- subset(Opponents_df, t_playernum == 1, select = c(chess_rounds, c_prerating)))
+
+(display_mean <- mean(display_opponents$c_prerating))
+
+(round(display_mean <- mean(display_opponents$c_prerating)))
+
+
+
+```
+
+
+
+# 8: Create .CSV dataset of Player Summary Chess Tournament information  
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+Create a .CSV dataset consisting of player name, location, total points earned this tournament, player's pre-rating, and mean of opponents pre-rating.
+
+As an example using the first player, the information would be: Gary Hua, ON, 6.0, 1794, 1605
+
+</div> \hfill\break
+
+```{r step_createCSV, echo=TRUE}
+#
+# Create .CSV after removing  temporary playernum vector
+OutputCSV_df <- subset(OutputCSV_df,
+      select = c(c_playername, c_loc, c_totpoints, c_prerating, c_avg_opp_prerating))  # omit "t"emporary col player num
+
+
+write_csv(OutputCSV_df, path = "D607_Chess_Summary.csv")
+
+head(OutputCSV_df)
+
+
+```
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+narrative
+
+
+</div> \hfill\break
