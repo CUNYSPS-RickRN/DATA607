@@ -1,0 +1,204 @@
+---
+title: "D607_template"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+# Background
+## Assignment 5: Tidying and Transforming Data
+
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Following are the goal's for this assignment:  
+-Transform data between wide and long formats using tidyr package  
+-Change shapes of data frames using dplyr package  
+-Perform data transformations to support downstream data analysis
+
+
+</div> \hfill\break
+
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+# Acquire Data
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this instance, used the assignment's PDF document as the data source to create a csv dataset using Excel.  This dataset stored on GitHub.
+
+</div> \hfill\break
+
+
+```{r step_readcsv, echo=TRUE }
+theURL = "https://raw.githubusercontent.com/CUNYSPS-RickRN/Team607-1/master/Wk05_airline_arrival_status.csv"
+
+arrivals_df <- read_csv(theURL, col_names = TRUE)
+
+arrivals_df
+
+```
+
+# Data Transformation 
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Following three rules makes a dataset tidy: variables are in columns, observations are in rows, and values are in cells.
+
+In this step, 3 steps performed to tidy data:
+- remove "blank line" by selecting status = on time or delayed
+- fill missing Airline data from previous row
+- pivot_longer to create observations of each origination/destination pair
+
+Before and after views of dataset of shown
+
+</div> \hfill\break
+```{r step_data_transformation, echo=TRUE}
+# Data transformation into tidy data form
+
+arrivals_pivot_df <- arrivals_df %>% 
+  subset(Status == ("on time") | Status == ("delayed")) %>% 
+  fill(Airline) %>% 
+  pivot_longer(c("LAX", "PHX", "SD", "SFO", "SEA"), 
+               names_to = "dest", values_to = "numflights")
+
+arrivals_pivot_df
+
+```
+
+# Analysis by Airport
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+This analysis compares the per-city on-time performance for both airlines.
+
+The first pair of graphs by airline shows the number of on-time and delayed
+flights by airport.  Different shapes are used to distinguish between on-time
+and delayed status.  AM West Airlines has  a high concentration of flights
+at the Phoenix airport while Alaska Airlines has a high concentration of flights
+at the Seattle airport.
+
+The third graph shows the proportion of each airline's on-time and delayed flights
+by airport.  One noticeable observation of the Phoenix airport is AM West Airlines has a
+substantially higher proportion of on-time flights when compared with Alaska Airlines
+and when compared with all other airports in the sample.  In the Seattle airport 
+Alaska Airlines has a substantially higher proportion of on-time flights when compared
+with AM West Airlines and when compared with all other airports in the sample.
+
+</div> \hfill\break
+
+
+```{r step_analysis_city, echo=TRUE}
+# 
+# plot by Airline dest/status num flights info 
+ggplot(data = arrivals_pivot_df) + 
+  geom_point(mapping = aes(x = dest, y = numflights, color= Airline, shape = Status)) + 
+  facet_wrap(~ Airline)
+
+# create new var prop_totalflights and calc prop of on-time by destination
+flight_props2 <- arrivals_pivot_df %>% 
+  group_by(dest) %>% 
+  #  filter(Status == "on time") %>% 
+  mutate(prop_totflights = numflights / sum(numflights))
+
+
+# Compare per-city on-time performance for both airlines
+ggplot(data = flight_props2) + 
+  geom_point(mapping = aes(x = dest, y = prop_totflights, color = Airline, shape = Status))
+
+
+
+```
+
+# Analysis by Airline
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+AM West Airlines had a better performance of having approximately 89% of flights on-time
+while Alaska Airlines had approximately 87% of its flights on-time.
+
+</div> \hfill\break
+
+```{r step_analysis_Airline, echo=TRUE}
+# calculate numerator
+flight_props_n <- flight_props2 %>% 
+  group_by(Airline) %>% 
+  filter(Status == "on time", Airline == "Alaska") %>% 
+  summarize(numflights)
+
+# calculate denominator
+flight_props_d <- flight_props2 %>% 
+  group_by(Airline) %>% 
+  filter(Airline == "Alaska") %>% 
+  summarize(numflights)
+
+
+OT_Alaska <- sum(flight_props_n$numflights) /sum(flight_props_d$numflights)
+
+cat("Alaska Airlines had ", OT_Alaska, " of flights on-time.\n ",
+    "Number of on-time flights=",sum(flight_props_n$numflights),
+    " out of ",sum(flight_props_d$numflights))
+
+# Calculate numerator
+flight_props_n <- flight_props2 %>% 
+  group_by(Airline) %>% 
+  filter(Status == "on time", Airline == "AM WEST") %>% 
+  summarize(numflights)
+
+# Calculate denominator
+flight_props_d <- flight_props2 %>% 
+  group_by(Airline) %>% 
+  filter(Airline == "AM WEST") %>% 
+  summarize(numflights)
+
+
+OT_AMWEST <- sum(flight_props_n$numflights) /sum(flight_props_d$numflights)
+cat("AM West Airlines had ", OT_AMWEST, " of flights on-time.\n ",
+    "Number of on-time flights=",sum(flight_props_n$numflights),
+    " out of ",sum(flight_props_d$numflights))
+
+```
+
+
+
+# Conclusion
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Airlines with hub airports defined as those with high concentration of flights
+appear to have a higher number of on-time flights.  Phoenix airport appears 
+to be a hub for AM West Airlines while Seattle airport appears to be a hub
+for Alaska Airlines.
+
+AM West Airlines had a better performance of having approximately 89% of flights on-time
+while Alaska Airlines had approximately 87% of its flights on-time.  AM West
+airlines had more than twice the number of flights than Alaska airlines.
+
+
+</div> \hfill\break
