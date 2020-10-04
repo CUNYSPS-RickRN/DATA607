@@ -1,0 +1,117 @@
+---
+title: "D607_P02_DS1"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Assignment
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Theme for this Project is Data Transformation.  
+
+For this project:
+1. Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset. You’re encouraged to use a “wide” structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.
+2. Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+3. Perform the analysis requested in the discussion item.
+
+This dataset is from the NYC MTA of annual ridership from 2013-2018.
+
+Collaborators:
+
+</div> \hfill\break
+
+
+# Read Dataset
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The NYC MTA Annual Ridership dataset, containing column names, is read from GitHub.  
+
+
+</div> \hfill\break
+
+
+
+```{r step_read_ds, echo=TRUE }
+# 
+theURL <- c("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/subway_riders.csv")
+subway_df <- tibble::as_tibble(read_csv(theURL))
+
+```
+
+# Tidy & Transform
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+This phase will tidy and transform the MTA Ridership dataset. The column names will be renamed to meaningful names, removal of extraneous column and row containing NA values.  Pivot_longer used to tidy data to represent observations comprised of Borough, Year, and Ridership values.
+
+</div> \hfill\break
+```{r step_tidy, echo=TRUE}
+# Change the column names
+names(subway_df) <- c("Borough", "Yr2013","Yr2014","Yr2015","Yr2016","Yr2017","Yr2018","IgnoreThisCol")
+
+subway_df <- select(subway_df, -(IgnoreThisCol))
+
+subway_df <- filter(subway_df,!(is.na(Borough)))  # remove rows with NA values
+
+List_of_Boroughs <- subway_df$Borough
+
+subway_change_df <- mutate(subway_df, Diff_2013_to_2018 = Yr2018 - Yr2013,
+                    Pct_Change = (Diff_2013_to_2018 / Yr2013) * 100)
+
+subway_pivot_df <- pivot_longer(subway_df, starts_with("Yr"), names_to = "Year", values_to = "Ridership")
+
+
+```
+
+# Analysis
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The first chart shows the year to year ridership by Borough. The second chart shows the percent change between the riderships in 2013 to 2018.  Ridership in The Bronx declined by more than 6% followed by Queens with a decline of more than 4%.  Ridership in Manhattan and Brooklyn dropped by less than 1 %.
+
+</div> \hfill\break
+
+
+```{r step_analysis}
+ggplot(data = subway_pivot_df, mapping = aes(x=Year, y=Ridership)) +
+  geom_point(mapping = aes(shape = Borough))
+
+ggplot(data=subway_change_df, mapping = aes(x=Borough, y=Pct_Change)) +
+  geom_point(mapping = aes(shape = Borough))
+
+
+```
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Further exploration is needed to understand the reasons for substantial decline in ridership in The Bronx and Queens.
+
+</div> \hfill\break
