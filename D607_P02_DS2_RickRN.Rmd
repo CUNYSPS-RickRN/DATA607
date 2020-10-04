@@ -1,0 +1,178 @@
+---
+title: "D607_P02_DS2"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r load-packages, include=FALSE}
+library(tidyverse)
+library(openintro)
+
+```
+
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Assignment
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Theme for this Project is Data Transformation.  
+
+For this project:
+1. Create a .CSV file (or optionally, a MySQL database!) that includes all of the information included in the dataset. You’re encouraged to use a “wide” structure similar to how the information appears in the discussion item, so that you can practice tidying and transformations as described below.
+2. Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data. [Most of your grade will be based on this step!]
+3. Perform the analysis requested in the discussion item.
+
+
+Collaborators: Magnus Skonberg
+
+</div> \hfill\break
+
+
+# Read Dataset
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The dataset was pulled from the larger Kaggle dataset (the 1st 20 students), transposed in Excel (rows became columns), and then saved as a .csv.
+
+The Student Performance in Exams dataset, containing column names (representing Student numbers), is read from GitHub.  
+
+
+</div> \hfill\break
+
+
+
+```{r step_read_ds, echo=TRUE }
+# 
+theURL <- c("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/student_performance.csv")
+student_performance_df <- read_csv(theURL)
+
+glimpse(data)
+
+```
+
+# Tidy & Transform
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+This phase will tidy and transform the Student Performance in Exams dataset.  It's readily apparent that each column represents observations for each student.  Therefore, pivot_longer used to tidy data to represent observations comprised of Parental Level of Education and scores for Math, Reading, and Writing.
+
+</div> \hfill\break
+```{r step_tidy, echo=TRUE}
+# Pivot table
+student_pivot_df <- gather(student_performance_df, "Student", "Score", 2:21, factor_key=TRUE)
+
+#
+student_pivot_df <- spread(student_pivot_df, "Student Num", "Score")
+
+# resequence columns
+student_pivot_df <- select(student_pivot_df, Student, `Parental Level of Education`, `Math Score`, `Reading Score`, `Writing Score`)
+
+student_pivot_df
+
+
+Parental_LOE_factors <- factor(student_pivot_df$`Parental Level of Education`)
+levels(Parental_LOE_factors)
+
+# Categorize parent education level
+
+upper_ed <- filter(student_pivot_df, (`Parental Level of Education` == "master's degree" | `Parental Level of Education` == "bachelor's degree"))
+
+mid_ed <- filter(student_pivot_df, (`Parental Level of Education` == "some college" | `Parental Level of Education` == "associate's degree"))
+
+low_ed <- filter(student_pivot_df, (`Parental Level of Education` == "high school" | `Parental Level of Education` == "some high school"))
+
+
+# Calculate average score per parent education level for each exam [future-do as func]
+
+# Those with an upper level: bachelor's or master's
+u_avg_math <- sum(as.numeric(upper_ed$`Math Score`)) / nrow(upper_ed)
+u_avg_read <- sum(as.numeric(upper_ed$`Reading Score`)) / nrow(upper_ed)
+u_avg_write <- sum(as.numeric(upper_ed$`Writing Score`)) / nrow(upper_ed)
+
+# Those with an mid level: some college or associate's
+m_avg_math <- sum(as.numeric(mid_ed$`Math Score`)) / nrow(mid_ed)
+m_avg_read <- sum(as.numeric(mid_ed$`Reading Score`)) / nrow(mid_ed)
+m_avg_write <- sum(as.numeric(mid_ed$`Writing Score`)) / nrow(mid_ed)
+
+# Those with a low level: high school
+l_avg_math <- sum(as.numeric(low_ed$`Math Score`)) / nrow(low_ed)
+l_avg_read <- sum(as.numeric(low_ed$`Reading Score`)) / nrow(low_ed)
+l_avg_write <- sum(as.numeric(low_ed$`Writing Score`)) / nrow(low_ed)
+
+
+c("Upper level avgs - Math: ",u_avg_math, " Reading: ",u_avg_read, " Writing: ", u_avg_write)
+c("Mid level avgs - Math: ",m_avg_math, " Reading: ",m_avg_read, " Writing: ", m_avg_write)
+c("Lower level avgs - Math: ",l_avg_math, " Reading: ",l_avg_read, " Writing: ", l_avg_write)
+
+
+```
+
+# Analysis
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Three sets of graphs show for each level of parental education level the students' average
+scores in Math, Reading, and Writing.
+
+</div> \hfill\break
+
+
+```{r step_analysis}
+##Plot the average score v parent education level for Math
+barplot(c(u_avg_math, m_avg_math, l_avg_math), beside=TRUE, main = "Avg Math Score v Parent Education Level", xlab = "Parent Education Level", ylab = "Avg Math Score", ylim = c(0, 70), names.arg = c("Upper", "Mid", "Lower"), col=c("#6699FF", "#6699FF", "#6699FF"), border="white")
+
+text(0.75, 50, as.character(u_avg_math))
+text(1.90, 50, as.character(m_avg_math))
+text(3.10, 50, as.character(l_avg_math))
+
+##Plot the average score v parent education level for Reading
+barplot(c(u_avg_read, m_avg_read, l_avg_read), beside=TRUE, main = "Avg Reading Score v Parent Education Level", xlab = "Parent Education Level", ylab = "Avg Reading Score", ylim = c(0, 75), names.arg = c("Upper", "Mid", "Lower"), col=c("#FF9933", "#FF9933", "#FF9933"), border="white")
+
+text(0.75, 50, as.character(u_avg_read))
+text(1.90, 50, as.character(m_avg_read))
+text(3.10, 50, as.character(l_avg_read))
+
+##Plot the average score v parent education level for Writing
+barplot(c(u_avg_write, m_avg_write, l_avg_write), beside=TRUE, main = "Avg Writing Score v Parent Education Level", xlab = "Parent Education Level", ylab = "Avg Writing Score", ylim = c(0, 75), names.arg = c("Upper", "Mid", "Lower"), col=c("#66CC99", "#66CC99", "#66CC99"), border="white")
+
+text(0.75, 50, as.character(u_avg_write))
+text(1.90, 50, as.character(m_avg_write))
+text(3.10, 50, as.character(l_avg_write))
+
+```
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In Math, the average student scores were better when parents had Master or Bachelor degrees and lower average student scores followed parents with high school education.
+
+In Writing, students whose parents have attained higher degrees score higher than students whose parents have an Associate's degree or lower.
+
+Interestingly, for Reading, students whose parents have higher levels of education with Masters or Bachelors degrees scored the lower than students whose parents only have a high school education.
+
+
+</div> \hfill\break
