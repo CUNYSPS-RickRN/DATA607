@@ -1,0 +1,23 @@
+{"catalog" :[
+{
+"title" : "R for Data Science",
+"author" : "Hadley Wickham,Garrett Grolemund",
+"price" : "24.99",
+"pubformat" : "Kindle",
+"pubyear" : 2017
+},
+{
+"title" : "Data Science for Business",
+"author" : "Foster Provost,Tom Fawcett",
+"price" : "43.49",
+"pubformat" : "Paperback",
+"pubyear" : 2013
+},
+{
+"title" : "R for Everyone - Second Edition",
+"author" : "Jared P. Lander",
+"price" : "31.92",
+"pubformat" : "Paperback",
+"pubyear" : 2017
+}]
+)
