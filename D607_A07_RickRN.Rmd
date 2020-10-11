@@ -1,0 +1,105 @@
+---
+title: "D607_A07_RickRN"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(XML)
+library(RCurl)
+library(rjson)
+#install.packages("useful")
+library(useful)
+```
+
+# Assignment
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The assignment is to use a text editor to create a book catalog of 3 books, each containing title, author(s) and 2-3 other book attributes then format them into 3 popular data exchange formats over the web using HTML, XML, and JSON files.
+
+Write code in R to load the information from the 3 sources into separate R data frames.
+
+Compared the three frames.
+
+Collaborators: Magnus Skonberg 
+
+</div> \hfill\break
+
+
+# Acquire Data
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Read in the three Book Catalog formats from GitHub - HTML, XML, and JSON formats.  Each file format is read then coerced into a data frame using various methods.
+
+Show a glimpse of each data frame sourced from HTML, XML, and JSON file formats.
+
+</div> \hfill\break
+```{r step_x, echo=TRUE }
+# Read in XML file then store as data frame
+books_xml <- getURL("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/D607_A07_xml_books.xml")
+books_xml_df <- xmlToDataFrame(books_xml)
+
+
+# Read in JSON file then store as data frame
+#books_json_file <- getURL("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/D607_A07_JSON_books.json")
+books_json_file <- getURL("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/D607_A07_jsonV2_books.json")
+
+books_json_interim <- fromJSON(books_json_file)
+books_json_df <- as.data.frame(books_json_interim)
+
+
+# Read in HTML file then store as data frame
+books_html <- getURL("https://raw.githubusercontent.com/CUNYSPS-RickRN/DATA607/master/D607_A07_html_books.html")
+books_html_df <- as.data.frame(readHTMLTable(books_html))
+
+
+glimpse(books_html_df)
+glimpse(books_json_df)
+glimpse(books_xml_df)
+```
+
+# Compare
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this step, the compare.list function from the useful package compares each of the HTML, JSON, and XML dataframes.  All 3 dataframes loaded from HTML,XML, and JSON matched each other.
+
+</div> \hfill\break
+```{r step_y, echo=TRUE}
+# Use the compare.list methods from useful package to compare elements of two equal length lists.
+compare.list(as.data.frame(books_html_df), as.data.frame(books_xml_df))
+
+compare.list(as.data.frame(books_html_df), as.data.frame(books_json_df))
+
+compare.list(as.data.frame(books_xml_df), as.data.frame(books_json_df))
+```
+
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this assignment, understanding 3 of the popular formats for exchanging data over the web (HTML, XML, and JSON) by using a text editor to format each accordingly using the same sample book catalog of 3 book titles demonstrates how these file formats can be loaded into data frames for subsequent processing.  Furthermore, each of the data frames sourced from these formats ought to match each other.
+
+</div> \hfill\break
