@@ -1,0 +1,169 @@
+---
+title: "D607_A09_RickRN"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(XML)
+library(RCurl)
+library(rjson)
+library(jsonlite)
+
+library(httr)
+```
+
+# Web APIs
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+This assignment is to choose one of the NY Time APIs,
+construct an interface in R to read in the JSON data, then
+transform data to an R dataframe.
+
+</div> \hfill\break
+
+
+
+# Query NYT via API
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The *[NY Times Newswire API](https://developer.nytimes.com/docs/timeswire-product/1/overview)*
+provides an up-to-the-minute stream of published articles. Usage requires obtaining an authorized API access key after completing registration form.
+
+The registered API key is stored in a .csv file and loaded at script run time.
+
+An HTTP API query for articles was requested.
+
+
+
+
+</div> \hfill\break
+
+
+```{r step_getAPIdata, echo=TRUE }
+# query NYT for all articles
+
+theURL <- "D607_A09_API.csv"
+nyt_API_key <- read.csv(file=theURL, header=TRUE, sep=",")
+
+nyt_URL_all <- c("https://api.nytimes.com/svc/news/v3/content/all/all.json?api-key=")
+nyt_URL_wAPIkey <- str_c(nyt_URL_all,nyt_API_key)
+
+nyt_r <- GET(nyt_URL_wAPIkey)
+
+# check response code
+http_status(nyt_r)
+stop_for_status(nyt_r)
+
+```
+
+# Transform JSON to R dataframe
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+After a successful API query, "raw" JSON data is transformed into an R data frame with containing 20 observations comprised of 26 variables.
+
+
+</div> \hfill\break
+```{r step_y, echo=TRUE}
+# Transform JSON data to R data frame
+nyt_query <- httr::content(nyt_r, as="raw")
+nyt_json <- jsonlite::fromJSON(rawToChar(nyt_query))
+nyt_df <- flatten(as.data.frame(nyt_json))
+```
+
+# Explorary Data Analysis
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+The data frame is subsetted containing section name, article title, byline, and creation date, arranged in section and title order, then reported. 
+
+</div> \hfill\break
+
+```{r step_z, echo=TRUE}
+# Tidy data
+(dim(nyt_df))
+(names(nyt_df))
+
+nyt_subset_df <- nyt_df %>% 
+    select(results.section, results.title, results.byline,results.created_date) %>% 
+  arrange(results.section, results.title)
+
+tibble(nyt_subset_df)
+```
+
+
+# Query Section Names
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Query the list of NY Times Section names.  This list can be used in future section specific queries. 
+
+</div> \hfill\break
+
+```{r step_z1, echo=TRUE}
+# Query NYT section names then tidy
+
+nyt_URL_section <- c("https://api.nytimes.com/svc/news/v3/content/section-list.json?api-key=")
+nyt_URL_wAPIkey <- str_c(nyt_URL_section,nyt_API_key)
+
+nyt_r <- GET(nyt_URL_wAPIkey)
+
+# check response code
+http_status(nyt_r)
+
+# transform data
+nyt_query <- httr::content(nyt_r, as="raw")
+nyt_json <- jsonlite::fromJSON(rawToChar(nyt_query))
+nyt_sec_df <- flatten(as.data.frame(nyt_json))
+
+
+nyt_subset_df <- nyt_sec_df %>% 
+  select(results.section,results.display_name) %>% 
+  arrange(results.section)
+
+tibble(nyt_subset_df)
+```
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this assignment, the following tasks were performed:  
+- completion of an online registration form necessary to obtain an authorized NY Times API key for query access,  
+- the API key was stored in a .csv file and read at script run time,  
+- an HTTP API query for the NY Times Newswire limited to 20 results (default),  
+- these results were received in JSON data format then transformed into a dataframe,  
+- several columns were selected and arranged by article section and title for reporting, and    
+- an additional query of all sections were obtained and arranged by section for reporting.
+
+In conclusion, this working API script can be used to create specific queries.  For example, searching all articles with titles and abstracts containing COVID and/or flu that can be extracted for further data analysis and text mining.
+
+</div> \hfill\break
