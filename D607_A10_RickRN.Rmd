@@ -1,0 +1,105 @@
+---
+title: "D607_A10_RickRN"
+author: "RickRN"
+date: "`r Sys.Date()`"
+output: 
+  openintro::lab_report: default
+  html_document:
+    number_sections: yes
+---
+
+```{r step_setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Sentiment Analysis
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+In this assignment, use the primary example code in Text Mining in R - Chapter 2 Sentiment Analysis (Silge & Robinson, 2020) and extend the code in the following manner:  
+-Work with a different corpus of your choosing  
+-Incorporate at least 1 additional sentiment lexicon.
+
+
+The NRC Word-Emotion Association Lexicon dataset is used in this code (Mohammad & Turney, 2013).
+
+Reference:
+Silge, J., & Robinson, D. (2020). Text mining with R: A tidy approach. O'Reilly Media, Inc. Retrieved from https://www.tidytextmining.com/
+
+Mohammad, S. M., & Turney, P. D. (2013). Crowdsourcing a word–emotion association lexicon. Computational Intelligence, 29(3), 436-465. Retrieved from https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-8640.2012.00460.x
+
+
+
+
+
+</div> \hfill\break
+
+
+
+
+# A Journal of the Plague Year
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+A Journal of the Plague Year by Daniel Defoe from Gutenberg used as corpus.
+NRC Word-Emotion Association Lexicon dataset is used in this code (Mohammad & Turney, 2013).
+
+The corpus will be tokenized and stop words will be removed.
+
+The NRC lexicon used to identify tokens related to "fear" and "joy" found in the corpus in a plague.
+
+A count of words related to fear and joy are ranked by frequency.
+
+</div> \hfill\break
+```{r step_y, echo=TRUE}
+# comments
+library(gutenbergr)
+library(tidytext)
+
+
+
+defoe <- gutenberg_download(c(376))  # A Journal of the Plague Year by Daniel Defoe
+
+tidy_defoe <- defoe %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+
+nrc_sentiments <- get_sentiments("nrc")
+
+nrc_joy <- get_sentiments("nrc") %>%
+  filter(sentiment == "joy")
+
+nrc_fear <- get_sentiments("nrc") %>%
+  filter(sentiment == "fear")
+
+
+(defoe_joy <- tidy_defoe %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE))
+
+(defoe_fear <- tidy_defoe %>%
+  inner_join(nrc_fear) %>%
+  count(word, sort = TRUE))
+
+
+
+```
+
+
+# Summary
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+Sentiment analysis provides a way to understand the attitudes and opinions expressed in texts.  For example, in A Journal of the Plague Year, a search was made for the sentiments of fear and joy in a plague.  Clearly, "plague" and "infection" are fear related words. However, some words can have dual meanings where "God" elicits both job and fear.  
+
+</div> \hfill\break
